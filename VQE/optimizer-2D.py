@@ -23,14 +23,20 @@ R=2
 L=2
 qubit = R*L
 level = 4
-batch = 1
+batch = 2
 h = [5 for i in range(qubit)]
 
 
 def rzz(c,i,j, params):
     c.cnot(i,i+1)
-    c.rz(i+1,theta=params[4*j+1, i])
+    c.rz(i+1,theta=params[5*j+1, i])
     c.cnot(i,i+1)
+    return c
+
+def rxx(c,i,j, params):
+    c.cnot(i,i+R)
+    c.rx(i+1,theta=params[5*j+3, i])
+    c.cnot(i,i+R)
     return c
 
 def energy(c: tc.Circuit,R,L):
@@ -56,25 +62,28 @@ def ex(params):
         c.h(i)
     for j in range(k):
         for i in range(qubit):
-            c.ry(i,theta=params[4*j+3,i])
-            c.rz(i,theta=params[4*j+2,i])
-            c.s(i)
+            c.rz(i,theta=params[5*j+2,i])
         for i in range(qubit):
-            c.rx(i,theta=params[4*j, i])
+            c.rx(i,theta=params[5*j, i])
+        for i in range(qubit-R):
+            c = rxx(c,i,j, params)
+            c.CNOT(i,i+1)
         for i in range(qubit-1):
             c = rzz(c,i,j, params)
+        for i in range(qubit):
+            c.ry(i,theta=params[5*j+4,i])
     return energy(c,R,L)
 
 ex_vg = tc.backend.jit(tc.backend.vvag(ex, argnums=0, vectorized_argnums=0))
 
-P = tf.Variable(initial_value=tf.random.normal(shape=[batch, level * 4+3, qubit], stddev=0.1, dtype=getattr(tf, tc.rdtypestr)))
+P = tf.Variable(initial_value=tf.random.normal(shape=[batch, level * 5+4, qubit], stddev=0.1, dtype=getattr(tf, tc.rdtypestr)))
 params = P
 history = [ ]
-opt = K.optimizer(tf.keras.optimizers.Adam(1e-2))
+opt = K.optimizer(tf.keras.optimizers.Adam(0.02))
 
 #t_2=time.time()
 
-for _ in range(100):
+for _ in range(150):
     v, g = ex_vg(params)
     params = opt.update(g, params)
 #     if _ % 20 == 0:
@@ -84,8 +93,8 @@ for _ in range(100):
 #         t_1=t_2
     history.append(np.min(v.numpy()))
 
-plt.plot([i for i in range(100)], history)
+plt.plot([i for i in range(150)], history)
 plt.ylabel("value")
 plt.xlabel("training step")
-plt.plot()
+plt.show()
 print(history[-1])
