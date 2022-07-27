@@ -66,14 +66,15 @@ RRR_new=RR_new.tolist()
 #print(RR_new)
 
 #可视化
-def pri_1(i):
-    print(int(r[i,0]),end=' ')
+def pri_1(i,r):
+    r=r
+    print(int(r[i,0]),end='')
     for j in range(R-1):
         if E[R*(L-1)+i*(R-1)+j] == 1:
-            print("-",end=' ')
+            print("---",end='')
         else:
-            print(" ",end=' ')
-        print(int(r[i,j+1]),end=' ')
+            print(" ",end='  ')
+        print(int(r[i,j+1]),end='')
     print('')
 def pri_2(i):
     for j in range(R):
@@ -83,13 +84,13 @@ def pri_2(i):
             print(" "," ",end=' ')
     print('')
 def pri_3(i):
-    print("?",end=' ')
+    print("?",end='')
     for j in range(R-1):
         if E[R*(L-1)+i*(R-1)+j] == 1:
-            print("-",end=' ')
+            print("---",end='')
         else:
-            print(" ",end=' ')
-        print("?",end=' ')
+            print(" ",end='  ')
+        print("?",end='')
     print('')
 
 
@@ -97,7 +98,7 @@ def pri_3(i):
 def mainloop():
     #检查边集是否为空
     if (LL_s+RR_s-3 == 0):
-        return "All state"
+        return "answer:All state"
     
     else:
         #判断函数，在第1辅助比特为±（0-1）的情况下可以输出c关于α（所有非解的均匀叠加态）翻转
@@ -197,14 +198,14 @@ def mainloop():
         
         #初始化主循环与可视化所需的参数
         m=1
-        m_=1.1
+        m_=1.2
         suc=False
         round = 0
 
         while suc == False:
             #在[0,m]中随机取非负整数j，作为grover函数的执行次数
             j=random.randint(0,int(m))
-            print("Round:",round,"(m,j)=","(",m,j,")")
+            print("Round:",round,"(m,j)=","(",m,",",j,")")
 
             #执行grover函数并且测量
             cmm=np.arange(R*L+1)
@@ -221,16 +222,23 @@ def mainloop():
                 sum=sum+(cmm[i]*2**(R*L+1-i))
             cmminput[int(sum)]=1
             cmmm=tc.Circuit(R*L+2,inputs=cmminput)
+            cmm=np.delete(cmm,[-1,-2])
+            r=cmm.reshape(L,R)
+            for i in range(L-1):
+                pri_1(i,r)
+                pri_2(i)
+            pri_1(L-1,r)
             
             #判断测量结果
             if classy(cmmm) == 1:
                 suc == True
-                np.delete(cmm,[-1,-2])
-                return np.delete(cmm,[-1,-2])
+                return cmm
             
             #放大m以提高测量结果正确率、维持理论次数期望的同时，给予grover函数执行次数上限以减少实际执行次数
             m = min(m*m_,math.sqrt(2**(R*L)))
             round = round + 1
+
+print('L=',L,', R=',R)
 
 #可视化初始边
 for i in range(L-1):
@@ -239,9 +247,10 @@ for i in range(L-1):
 pri_3(L-1)
 
 #可视化结果
-r=mainloop()
-r=r.reshape(L,R)
+an=mainloop()
+an=an.reshape(L,R)
+print("answer:")
 for i in range(L-1):
-    pri_1(i)
+    pri_1(i,an)
     pri_2(i)
-pri_1(L-1)
+pri_1(L-1,an)
