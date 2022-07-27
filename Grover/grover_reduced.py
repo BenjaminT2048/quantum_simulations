@@ -60,93 +60,94 @@ RRR_new=RR_new.flat
 print(RR)
 print(RR_new)
 
-def oracle(c):
-    for i in range(L):
-        for j in range(R-1):
-            if E[i*R+j] == 1:
-                c.CNOT(i*R+j+1,i*R+j)
-    
-    if RR_s==1:
-        c.X(RR[-1])
-    else:
-        c.multicontrol(*RRR,ctrl=[1 for __ in RR_new],unitary=X)
-    
-    for i in range(L):
-        for j in range(R-1):
-            if E[(L-1-i)*R+(R-2-j)] == 1:
-                c.CNOT((L-1-i)*R+(R-2-j)+1,(L-1-i)*R+(R-2-j))
-    
-    for i in range((L-1)*R):
-        if E[i] == 1:
-            c.CNOT(i+R,i)
-    #print(*LLL)
-    c.multicontrol(*LLL,ctrl=[1 for __ in LL_new],unitary=X)
-    
-    for i in range((L-1)*R):
-        if E[(L-1)*R-1-i] == 1:
-            c.CNOT(L*R-1-i,(L-1)*R-1-i)
-    
-    for i in range(L):
-        for j in range(R-1):
-            if E[i*R+j] == 1:
-                c.CNOT(i*R+j+1,i*R+j)
-    
-    if RR_s==1:
-        c.X(RR[-1])
-    else:
-        c.multicontrol(*RRR,ctrl=[1 for __ in RR_new],unitary=X)
-    
-    for i in range(L):
-        for j in range(R-1):
-            if E[(L-1-i)*R+(R-2-j)] == 1:
-                c.CNOT((L-1-i)*R+(R-2-j)+1,(L-1-i)*R+(R-2-j))
-    
-    return c
 
-def reflect(c):
-    for i in range(R*L):
-        c.H(i)
-        c.X(i)
-    
-    c.multicontrol(*range(R*L),ctrl=[1 for _ in range(R*L-1)],unitary=Z)
-    
-    for i in range(R*L):
-        c.X(i)
-        c.H(i)
-    
-    return c
-
-
-def Groove(c):
-    c = c
-    c.X(-1)
-    c.H(-1)
-    c = oracle(c)
-    c = reflect(c)
-    c.H(-1)
-    c.X(-1)
-    
-    return c
-
-def initialize():
-    c=tc.Circuit(R*L+2)
-    for i in range(R*L):
-        c.H(i)
-    return c
-
-def classy(c):
-    c = oracle(c)
-    cm = c.measure(R*L, with_prob=False)
-    if cm[0].numpy().sum() == 1:
-        return 1
-    else:
-        return 0
 
 def mainloop():
     if (LL_s+RR_s-3 == E.size):
         return "All state"
     
     else:
+        def oracle(c):
+            for i in range(L):
+                for j in range(R-1):
+                    if E[i*R+j] == 1:
+                        c.CNOT(i*R+j+1,i*R+j)
+    
+            if RR_s==1:
+                c.X(RR[-1])
+            else:
+                c.multicontrol(*RRR,ctrl=[1 for __ in RR_new],unitary=X)
+    
+            for i in range(L):
+                for j in range(R-1):
+                    if E[(L-1-i)*R+(R-2-j)] == 1:
+                        c.CNOT((L-1-i)*R+(R-2-j)+1,(L-1-i)*R+(R-2-j))
+    
+            for i in range((L-1)*R):
+                if E[i] == 1:
+                    c.CNOT(i+R,i)
+            #print(*LLL)
+            c.multicontrol(*LLL,ctrl=[1 for __ in LL_new],unitary=X)
+    
+            for i in range((L-1)*R):
+                if E[(L-1)*R-1-i] == 1:
+                    c.CNOT(L*R-1-i,(L-1)*R-1-i)
+    
+            for i in range(L):
+                for j in range(R-1):
+                    if E[i*R+j] == 1:
+                        c.CNOT(i*R+j+1,i*R+j)
+    
+            if RR_s==1:
+                c.X(RR[-1])
+            else:
+                c.multicontrol(*RRR,ctrl=[1 for __ in RR_new],unitary=X)
+    
+            for i in range(L):
+                for j in range(R-1):
+                    if E[(L-1-i)*R+(R-2-j)] == 1:
+                        c.CNOT((L-1-i)*R+(R-2-j)+1,(L-1-i)*R+(R-2-j))
+    
+            return c
+
+        def reflect(c):
+            for i in range(R*L):
+                c.H(i)
+                c.X(i)
+    
+            c.multicontrol(*range(R*L),ctrl=[1 for _ in range(R*L-1)],unitary=Z)
+    
+            for i in range(R*L):
+                c.X(i)
+                c.H(i)
+    
+            return c
+
+
+        def Groove(c):
+            c = c
+            c.X(-1)
+            c.H(-1)
+            c = oracle(c)
+            c = reflect(c)
+            c.H(-1)
+            c.X(-1)
+    
+            return c
+
+        def initialize():
+            c=tc.Circuit(R*L+2)
+            for i in range(R*L):
+                c.H(i)
+            return c
+
+        def classy(c):
+            c = oracle(c)
+            cm = c.measure(R*L, with_prob=False)
+            if cm[0].numpy().sum() == 1:
+                return 1
+            else:
+                return 0
         m=1
         m_=1.1
         suc=False
@@ -159,16 +160,15 @@ def mainloop():
             c=initialize()
             for i in range(j):
                 c=Groove(c)
-            #print(c._nqubits)
-            r=c.measure(0,1,2,3,4,with_prob=False)
+            r=c.measure(*range(R*L+1),with_prob=False)
             cmm=K.numpy(r[0])
             
             sum=0
-            cmminput=np.zeros([2**(R*L+1)])
+            cmminput=np.zeros([2**(R*L+2)])
             for i in range(R*L):
                 sum=sum+(cmm[i]*2**i)
             cmminput[int(sum)]=1
-            cmmm=tc.Circuit(R*L+1,inputs=cmminput)
+            cmmm=tc.Circuit(R*L+2,inputs=cmminput)
             if classy(cmmm) == 1:
                 suc == True
                 return np.delete(cmm,[-1])
