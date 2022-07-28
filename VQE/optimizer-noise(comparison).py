@@ -19,7 +19,7 @@ P = K.ones(shape = [l1, 2], dtype = "float32")
 seed = K.ones(shape = [l1, n], dtype = "float32")
 h = [0 for i in range(l1)]
 px = 0.1
-py = 0.9
+py = 0.1
 pz = 0.1
 round=100
 
